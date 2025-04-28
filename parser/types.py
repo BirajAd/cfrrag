@@ -14,7 +14,7 @@ class MetaData(BaseModel):
 class Chapter(BaseModel):
     number: str
     subject: str
-    page: int
+    page: Optional[str] = None
 
 class Content(BaseModel):
     type: str
