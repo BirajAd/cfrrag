@@ -2,7 +2,7 @@ Law LM Project
 Overview
 
 Law LM is a legal language model project aimed at improving the accessibility, efficiency, and usability of legal information—especially for regulations within the Code of Federal Regulations (CFR). By using structured legal data and advanced processing techniques, this project seeks to modernize how legal information is retrieved, interpreted, and applied.
-Motivation
+
 
 The legal system is complex and often difficult to navigate. This project is driven by three core goals:
 
