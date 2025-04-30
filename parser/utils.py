@@ -1,3 +1,5 @@
+import pandas as pd
+from typing import Optional
 import xml.etree.ElementTree as ET
 from typing import Dict
 from parser.types import Volume
@@ -185,3 +187,54 @@ def parse_cfr_xml(xml_file: str) -> Volume:
         result["parts"].append(part_data)
 
     return result
+
+def flatten_volume(volume: Volume) -> pd.DataFrame:
+    records = []
+
+    meta = volume.metadata
+
+    def recurse_content(content, part_num: Optional[str], subpart_title: Optional[str], section_num: str, section_subj: str):
+        records.append({
+            # metadata
+            "title_number":        meta.title_number,
+            "metadata_subject":    meta.subject,
+            "metadata_parts":      meta.parts,
+            "metadata_revised":    meta.revised,
+            "metadata_contains":   meta.contains,
+            "metadata_date":       meta.date,
+            "metadata_publication":meta.publication,
+            # part / subpart / section context
+            "part_number":         part_num,
+            "subpart_title":       subpart_title,
+            "section_number":      section_num,
+            "section_subject":     section_subj,
+            # content itself
+            "content_type":        content.type,
+            "content_heading":     content.heading,
+            "content_text":        content.text
+        })
+        for sub in content.subparagraphs:
+            recurse_content(sub, part_num, subpart_title, section_num, section_subj)
+
+    # 1) top‐level sections
+    for sec in volume.sections:
+        for c in sec.content:
+            recurse_content(c, part_num=None, subpart_title=None,
+                            section_num=sec.number, section_subj=sec.subject)
+
+    # 2) parts → sections
+    for part in volume.parts:
+        for sec in part.sections:
+            for c in sec.content:
+                recurse_content(c, part_num=part.number, subpart_title=None,
+                                section_num=sec.number, section_subj=sec.subject)
+        # 3) subparts → sections
+        for subp in part.subparts:
+            for sec in subp.sections:
+                for c in sec.content:
+                    recurse_content(c, part_num=part.number,
+                                    subpart_title=subp.title,
+                                    section_num=sec.number,
+                                    section_subj=sec.subject)
+
+    return pd.DataFrame.from_records(records)
